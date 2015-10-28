@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 import sqlite3
 import sys
 from classes import *
-        
+
 class CustomTreeWidgetConditionItem(QTreeWidgetItem):
     def __init__(self, parent, status, name, dateStart):
         super().__init__(parent)
@@ -56,7 +56,7 @@ class Window(QMainWindow):
         self.conditionViewWidget = QWidget()
         self.mainMenu = self.menuBar()
         self.mainWidget = QWidget()
-        self.data = Hierarchy()
+        self.healthData = Hierarchy()
         self.dbConnection = None
         self.dbCursor = None
 
@@ -101,9 +101,12 @@ class Window(QMainWindow):
         self.mainWidget.setLayout(mainLayout)
         self.setCentralWidget(self.mainWidget)
 
+        # Import data
+        self.importData("healthdata.db")
+
     def initConditionViewWidget(self):
         background = self.palette()
-        
+
         conditionViewLayout = QVBoxLayout()
 
         conditionViewHeader = QHBoxLayout()
@@ -168,8 +171,46 @@ class Window(QMainWindow):
         self.dbConnection = sqlite3.connect(dbName)
         self.dbCursor = self.dbConnection.cursor()
 
-        self.dbCursor.execute()
-        
+        # Import doctor information
+        self.dbCursor.execute("SELECT * FROM Doctors")
+        for each in self.dbCursor:
+            self.healthData.doctors[each[0]] = Doctor(each[1], each[2], each[3], each[0])
+
+        # Import condition information
+        self.dbCursor.execute("SELECT * FROM Conditions")
+        for each in self.dbCursor:
+            self.healthData.conditions[each[0]] = Condition(each[1], each[2], each[3], each[4], each[5], each[0])
+
+        # Import treatment information
+        self.dbCursor.execute("SELECT * FROM Treatments")
+        for each in self.dbCursor:
+            self.healthData.treatments[each[0]] = Treatment(each[1], each[2], each[3], each[0])
+
+        # Import treatment detail information
+        self.dbCursor.execute("SELECT * FROM TreatmentsDetails")
+        for each in self.dbCursor:
+            self.healthData.treatmentsDetails[each[0]] = TreatmentDetail(each[1], each[2], each[0])
+
+        # Import symptom information
+        self.dbCursor.execute("SELECT * FROM Symptoms")
+        for each in self.dbCursor:
+            self.healthData.symptoms[each[0]] = Symptom(each[1], each[0])
+
+        # Import symptom occurrence information
+        self.dbCursor.execute("SELECT * FROM Symptoms")
+        for each in self.dbCursor:
+            self.healthData.symptomsOccurrences = SymptomOccurrence(each[1], each[0])
+
+        # Import test information
+        self.dbCursor.execute("SELECT * FROM Tests")
+        for each in self.dbCursor:
+            self.healthData.tests[each[0]] = Test(each[1], each[2], each[3], each[4], each[5], each[0])
+
+        # Import visit information
+        self.dbCursor.execute("SELECT * FROM Visits")
+        for each in self.dbCursor:
+            self.healthData.visits[each[0]] = Visit(each[1], each[2], each[0])
+
 if __name__ == "__main__":
         app = QApplication(sys.argv)
         form = Window()

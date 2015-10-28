@@ -1,14 +1,14 @@
 class Visit:
     visitList = {}
 
-    def __init__(self, doctorIdNum, date, cost, idNum=None):
+    def __init__(self, date, cost, idNum=None):
         if idNum == None:
             self.idNum = len(Visit.visitList) + 1
         else:
             self.idNum = idNum
-        self.doctor = Doctor.doctorList[doctorIdNum]
         self.date = date
         self.cost = cost
+        self.doctor = None
 
         Visit.visitList[self.idNum] = self
 
@@ -28,12 +28,12 @@ class Doctor:
         self.treatmentsRx = []
         self.visits = []
 
-        Doctor.doctorlist[self.idNum] = self
+        Doctor.doctorList[self.idNum] = self
 
 class Condition:
     conditionList = {}
     statusList = ("Confirmed", "Disconfirmed", "Preliminary", "Cured")
-    
+
     def __init__(self, name, status, startDate, endDate, notes, idNum=None):
         if idNum == None:
             self.idNum = len(Condition.conditionList.keys()) + 1
@@ -44,7 +44,7 @@ class Condition:
             self.status = "Preliminary"
         else:
             self.status = status
-        
+
         self.startDate = startDate
         self.endDate = endDate
         self.notes = notes
@@ -58,13 +58,13 @@ class Condition:
 class Test:
     testList = {}
 
-    def __init__(self, name, dateTake, cost, notes, filePath, idNum=None):
+    def __init__(self, name, dateTaken, cost, notes, filePath, idNum=None):
         if idNum == None:
             self.idNum = len(Test.testList.keys()) + 1
         else:
             self.idNum = idNum
         self.name = name
-        self.dateTaken = dateTaken
+        self.date = dateTaken
         self.cost = cost
         self.notes = notes
         self.file = filePath
@@ -82,12 +82,19 @@ class Symptom:
         else:
             self.idNum = idNum
         self.name = name
-        self.datesOccurred = []
+        self.occurrences = []
 
         Symptom.symptomList[self.idNum] = self
 
-    def addOccurrence(self, date):
-        self.datesOccurred.append(date)
+class SymptomOccurrence:
+    symptomOccurrenceList = {}
+
+    def __init__(self, date, idNum=None):
+        if idNum == None:
+            self.idNum = len(SymptomOccurrence.symptomOccurrenceList.keys()) + 1
+        else:
+            self.idNum = idNum
+        self.date = date
 
 class Treatment:
     treatmentList = {}
@@ -109,20 +116,20 @@ class Treatment:
 class TreatmentDetail:
     treatmentDetailList = {}
 
-    def __init__(self, dosage, date, treatmentId, idNum=None):
+    def __init__(self, dosage, date, idNum=None):
         if idNum == None:
             self.idNum = len(TreatmentDetail.treatmentDetailList.keys()) + 1
         else:
             self.idNum = idNum
         self.dosage = dosage
         self.date = date
-        self.detailOf = Treatment.treatmentList[treatmentId]
+        self.detailOf = None
 
         TreatmentDetail.treatmentDetailList[self.idNum] = self
-        
+
 class Patient:
     patientList = {}
-    
+
     def __init__(self, name, idNum=None):
         if idNum == None:
             self.idNum = len(Patient.patientList.keys()) + 1
@@ -141,9 +148,11 @@ class Patient:
 
 class Hierarchy:
     def __init__(self):
-        self.patients = {}
-        self.treatments = {}
-        self.symptoms = {}
-        self.tests = {}
         self.doctors = {}
         self.conditions = {}
+        self.treatments = {}
+        self.treatmentsDetails = {}
+        self.symptoms = {}
+        self.symptomsOccurrences = {}
+        self.tests = {}
+        self.visits = {}
