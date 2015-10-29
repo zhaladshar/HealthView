@@ -3,6 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 import sqlite3
 import sys
+import xml.etree.ElementTree as ET
 from classes import *
 
 class CustomTreeWidgetConditionItem(QTreeWidgetItem):
@@ -57,22 +58,18 @@ class Window(QMainWindow):
         self.mainMenu = self.menuBar()
         self.mainWidget = QWidget()
         self.healthData = Hierarchy()
+        self.xmlData = ET.ElementTree(file="config.xml").getroot()
         self.dbConnection = None
         self.dbCursor = None
 
         self.setGeometry(50, 50, 800, 300)
-        self.setWindowTitle("Health Program")
+        self.setWindowTitle("HealthView")
 
+        # Import patient data
+        self.importData("healthdata.db")
+        
         # Modify menu-/status- bars for the UI
-        self.statusBar()
-
-        exitAction = QAction("&Exit", self)
-        exitAction.setShortcut("Ctrl+Q")
-        exitAction.setStatusTip("Leave the Game")
-        exitAction.triggered.connect(self.close)
-
-        self.fileMenu = self.mainMenu.addMenu("&File")
-        self.fileMenu.addAction(exitAction)
+        self.constructMenus()
 
         # Initialize tree widget view
         self.treeWidget.setHeaderHidden(True)
@@ -101,8 +98,28 @@ class Window(QMainWindow):
         self.mainWidget.setLayout(mainLayout)
         self.setCentralWidget(self.mainWidget)
 
-        # Import data
-        self.importData("healthdata.db")
+    def constructMenus(self):
+        self.statusBar()
+
+        newFileAction = QAction("&New...", self)
+        newFileAction.setShortcut("Ctrl+N")
+        newFileAction.setStatusTip("Create a new patient file")
+        newFileAction.triggered.connect(self.newFile)
+
+        openFileAction = QAction("&Open...", self)
+        openFileAction.setShortcut("Ctrl+O")
+        openFileAction.setStatusTip("Open an existing patient file")
+        openFileAction.triggered.connect(self.openFile)
+        
+        exitAction = QAction("&Exit", self)
+        exitAction.setShortcut("Ctrl+Q")
+        exitAction.setStatusTip("Leave the Game")
+        exitAction.triggered.connect(self.close)
+
+        self.fileMenu = self.mainMenu.addMenu("&File")
+        self.fileMenu.addAction(newFileAction)
+        self.fileMenu.addAction(openFileAction)
+        self.fileMenu.addAction(exitAction)
 
     def initConditionViewWidget(self):
         background = self.palette()
@@ -199,7 +216,7 @@ class Window(QMainWindow):
         # Import symptom occurrence information
         self.dbCursor.execute("SELECT * FROM Symptoms")
         for each in self.dbCursor:
-            self.healthData.symptomsOccurrences = SymptomOccurrence(each[1], each[0])
+            self.healthData.symptomsOccurrences[each[0]] = SymptomOccurrence(each[1], each[0])
 
         # Import test information
         self.dbCursor.execute("SELECT * FROM Tests")
@@ -210,6 +227,18 @@ class Window(QMainWindow):
         self.dbCursor.execute("SELECT * FROM Visits")
         for each in self.dbCursor:
             self.healthData.visits[each[0]] = Visit(each[1], each[2], each[0])
+
+        # Make links between objects
+        startingString = "self.healthData."
+        self.dbCursor.execute("SELECT * FROM Xref")
+        for each in self.dbCursor:
+            eval(startingString + each[0] + "[" + str(each[1]) + "]." + each[2] + "(" + startingString + each[3] + "[" + str(each[4]) + "])")
+            
+    def newFile(self):
+        pass
+
+    def openFile(self):
+        pass
 
 if __name__ == "__main__":
         app = QApplication(sys.argv)

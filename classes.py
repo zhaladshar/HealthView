@@ -12,10 +12,13 @@ class Visit:
 
         Visit.visitList[self.idNum] = self
 
+    def addDoctor(self, doctor):
+        self.doctor = doctor
+
 class Doctor:
     doctorList = {}
 
-    def __init__(self, name, startDate, endDate, idNum=None):
+    def __init__(self, name, startDate, endDate=None, idNum=None):
         if idNum == None:
             self.idNum = len(Doctor.doctorList.keys()) + 1
         else:
@@ -29,6 +32,18 @@ class Doctor:
         self.visits = []
 
         Doctor.doctorList[self.idNum] = self
+
+    def addVisit(self, visit):
+        self.visits.append(visit)
+
+    def addCondition(self, condition):
+        self.diagnoses.append(condition)
+
+    def addTreatment(self, treatment):
+        self.treatmentsRx.append(treatment)
+
+    def addTest(self, test):
+        self.testsRun.append(test)
 
 class Condition:
     conditionList = {}
@@ -55,6 +70,18 @@ class Condition:
 
         Condition.conditionList[self.idNum] = self
 
+    def addDoctor(self, doctor):
+        self.diagnosingDr = doctor
+
+    def addSymptom(self, symptom):
+        self.symptoms.append(symptom)
+
+    def addTreatment(self, treatment):
+        self.treatments.append(treatment)
+
+    def addTest(self, test):
+        self.tests.append(test)
+
 class Test:
     testList = {}
 
@@ -73,6 +100,12 @@ class Test:
 
         Test.testList[self.idNum] = self
 
+    def addCondition(self, condition):
+        self.forCondition = condition
+
+    def addDoctor(self, doctor):
+        self.doctor = doctor
+
 class Symptom:
     symptomList = {}
 
@@ -86,6 +119,9 @@ class Symptom:
 
         Symptom.symptomList[self.idNum] = self
 
+    def addOccurrence(self, symptomOccurrence):
+        self.occurrences.append(symptomOccurrence)
+
 class SymptomOccurrence:
     symptomOccurrenceList = {}
 
@@ -95,6 +131,10 @@ class SymptomOccurrence:
         else:
             self.idNum = idNum
         self.date = date
+        self.occurrenceOf = None
+
+    def addOccurrenceOf(self, symptom):
+        self.occurrenceOf = symptom
 
 class Treatment:
     treatmentList = {}
@@ -113,6 +153,15 @@ class Treatment:
 
         Treatment.treatmentList[self.idNum] = self
 
+    def addCondition(self, condition):
+        self.forCondition = condition
+
+    def addDoctor(self, doctor):
+        self.doctor = doctor
+
+    def addDetail(self, treatmentDetail):
+        self.treatmentDetails.append(treatmentDetail)
+
 class TreatmentDetail:
     treatmentDetailList = {}
 
@@ -126,6 +175,9 @@ class TreatmentDetail:
         self.detailOf = None
 
         TreatmentDetail.treatmentDetailList[self.idNum] = self
+
+    def addDetailOf(self, treatment):
+        self.detailOf = treatment
 
 class Patient:
     patientList = {}
