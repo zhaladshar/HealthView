@@ -45,6 +45,28 @@ class Doctor:
     def addTest(self, test):
         self.testsRun.append(test)
 
+    def getStartDate(self):
+        firstDate = None
+        
+        if self.visits:
+            firstDate = self.visits[0].date
+
+            for each in range(1, len(self.visits)):
+                if firstDate > self.visits[each].date:
+                    firstDate = self.visits[each].date
+        return firstDate
+
+    def getEndDate(self):
+        lastDate = None
+        
+        if self.visits:
+            lastDate = self.visits[0].date
+
+            for each in range(1, len(self.visits)):
+                if lastDate < self.visits[each].date:
+                    lastDate = self.visits[each].date
+        return lastDate
+
 class Condition:
     conditionList = {}
     statusList = ("Confirmed", "Disconfirmed", "Preliminary", "Cured")
@@ -82,6 +104,12 @@ class Condition:
     def addTest(self, test):
         self.tests.append(test)
 
+    def getStartDate(self):
+        return self.startDate
+
+    def getEndDate(self):
+        return self.endDate
+
 class Test:
     testList = {}
 
@@ -106,6 +134,12 @@ class Test:
     def addDoctor(self, doctor):
         self.doctor = doctor
 
+    def getStartDate(self):
+        return self.date
+
+    def getEndDate(self):
+        return None
+
 class Symptom:
     symptomList = {}
 
@@ -121,6 +155,28 @@ class Symptom:
 
     def addOccurrence(self, symptomOccurrence):
         self.occurrences.append(symptomOccurrence)
+
+    def getStartDate(self):
+        firstDate = None
+        
+        if self.occurrences:
+            firstDate = self.occurrences[0].date
+
+            for each in range(1, len(self.occurrences)):
+                if firstDate > self.occurrences[each].date:
+                    firstDate = self.occurrences[each].date
+        return firstDate
+
+    def getEndDate(self):
+        lastDate = None
+        
+        if self.occurrences:
+            lastDate = self.occurrences[0].date
+
+            for each in range(1, len(self.occurrences)):
+                if lastDate < self.occurrences[each].date:
+                    lastDate = self.occurrences[each].date
+        return lastDate
 
 class SymptomOccurrence:
     symptomOccurrenceList = {}
@@ -161,6 +217,28 @@ class Treatment:
 
     def addDetail(self, treatmentDetail):
         self.treatmentDetails.append(treatmentDetail)
+
+    def getStartDate(self):
+        firstDate = None
+        
+        if self.treatmentDetails:
+            firstDate = self.treatmentDetails[0].date
+
+            for each in range(1, len(self.treatmentDetails)):
+                if firstDate > self.treatmentDetails[each].date:
+                    firstDate = self.treatmentDetails[each].date
+        return firstDate
+
+    def getEndDate(self):
+        lastDate = None
+        
+        if self.treatmentDetails:
+            lastDate = self.treatmentDetails[0].date
+
+            for each in range(1, len(self.treatmentDetails)):
+                if lastDate < self.treatmentDetails[each].date:
+                    lastDate = self.treatmentDetails[each].date
+        return lastDate
 
 class TreatmentDetail:
     treatmentDetailList = {}

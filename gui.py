@@ -6,41 +6,56 @@ import sys
 import xml.etree.ElementTree as ET
 from classes import *
 
-class CustomTreeWidgetConditionItem(QTreeWidgetItem):
-    def __init__(self, parent, status, name, dateStart):
+class CustomTreeWidgetItem(QTreeWidgetItem):
+    def __init__(self, parent, status, name, dateStart=None, dateEnd=None):
         super().__init__(parent)
         self.status = status
         self.name = name
-        self.startDate = dateStart
+        self.dateStart = dateStart
+        self.dateEnd = dateEnd
 
         self.main = QWidget()
         mainLayout = QHBoxLayout()
 
         # Add spacers depending on the depth of the node being created
-        for rng in range(0, self.depth()):
+        for rng in range(self.depth()):
             bufferLabel = QLabel("")
             bufferLabel.setStyleSheet("QLabel { background-color: rgba(255, 255, 255, 0) }")
             bufferLabel.setFixedWidth(15)
             mainLayout.addWidget(bufferLabel)
 
         statusLabel = QLabel("")
-        if self.status == "confirmed":
+        if self.status == "Condition":
             statusLabel.setStyleSheet("QLabel { background-color: green }")
-        else:
+        elif self.status == "Test":
+            statusLabel.setStyleSheet("QLabel { background-color: yellow }")
+        elif self.status == "Symptom":
+            statusLabel.setStyleSheet("QLabel { background-color: blue }")
+        elif self.status == "Treatment":
             statusLabel.setStyleSheet("QLabel { background-color: red }")
+        elif self.status == "Doctor":
+            statusLabel.setStyleSheet("QLabel { background-color: pink }")
+        else:
+            statusLabel.setStyleSheet("QLabel { background-color: white }")
         statusLabel.setFixedWidth(15)
         statusLabel.setFixedHeight(45)
         mainLayout.addWidget(statusLabel)
 
         subLayout = QVBoxLayout()
-        conditionLabel = QLabel(self.name)
-        conditionLabel.setStyleSheet("QLabel { font-size: 20px }")
-        dateLabel = QLabel(self.startDate)
-        dateLabel.setStyleSheet("QLabel { font-size: 10px }")
-        subLayout.addWidget(conditionLabel)
-        subLayout.addWidget(dateLabel)
+        nameLabel = QLabel(self.name)
+        nameLabel.setStyleSheet("QLabel { font-size: 20px }")
+        subLayout.addWidget(nameLabel)
+
+        if self.dateStart != None:
+            dateString = self.dateStart
+            if self.dateEnd != None:
+                dateString += "-" + self.dateEnd
+            dateLabel = QLabel(dateString)
+            dateLabel.setStyleSheet("QLabel { font-size: 10px }")
+            subLayout.addWidget(dateLabel)
 
         mainLayout.addLayout(subLayout)
+
         self.main.setLayout(mainLayout)
 
     def depth(self):
@@ -48,15 +63,30 @@ class CustomTreeWidgetConditionItem(QTreeWidgetItem):
             return 0
         else:
             return 1 + self.parent().depth()
-
+                
 class Window(QMainWindow):
     def __init__(self):
         super().__init__()
         # Initialize instance attributes
-        self.treeWidget = QTreeWidget()
+        self.treeViews = QTabWidget()
+        self.treeWidgetCondition = QTreeWidget()
+        self.treeWidgetDoctor = QTreeWidget()
+        self.treeWidgetTest = QTreeWidget()
+        self.treeWidgetSymptom = QTreeWidget()
+        self.treeWidgetTreatment = QTreeWidget()
+        self.treeWidgetVisit = QTreeWidget()
+        
+        self.patientViews = QStackedWidget()
         self.conditionViewWidget = QWidget()
-        self.mainMenu = self.menuBar()
+        self.treatmentViewWidget = QWidget()
+        self.doctorViewWidget = QWidget()
+        self.testViewWidget = QWidget()
+        self.symptomViewWidget = QWidget()
+        self.visitViewWidget = QWidget()
+
         self.mainWidget = QWidget()
+        
+        self.mainMenu = self.menuBar()
         self.healthData = Hierarchy()
         self.xmlData = ET.ElementTree(file="config.xml").getroot()
         self.dbConnection = None
@@ -72,32 +102,98 @@ class Window(QMainWindow):
         self.constructMenus()
 
         # Initialize tree widget view
-        self.treeWidget.setHeaderHidden(True)
-        self.treeWidget.setColumnCount(1)
-        condition1 = CustomTreeWidgetConditionItem(self.treeWidget, "confirmed", "Heavy Metal Toxicity", "6/10/2012")
-        condition2 = CustomTreeWidgetConditionItem(condition1, "tentative", "Leprosy", "10/26/2015")
-        condition3 = CustomTreeWidgetConditionItem(self.treeWidget, "ended", "Nothing", "3/13/2014")
-        self.treeWidget.setItemWidget(condition1, 0, condition1.main)
-        self.treeWidget.setItemWidget(condition2, 0, condition2.main)
-        self.treeWidget.setItemWidget(condition3, 0, condition3.main)
-        self.treeWidget.setIndentation(0)
-        self.treeWidget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.treeWidget.header().setStretchLastSection(False)
-        self.treeWidget.header().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.treeWidget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored)
+        self.buildTreeWidget(self.treeWidgetCondition, "Condition", self.healthData.conditions)
+        self.buildTreeWidget(self.treeWidgetDoctor, "Doctor", self.healthData.doctors)
+        self.buildTreeWidget(self.treeWidgetTest, "Test", self.healthData.tests)
+        self.buildTreeWidget(self.treeWidgetSymptom, "Symptom", self.healthData.symptoms)
+        self.buildTreeWidget(self.treeWidgetTreatment, "Treatment", self.healthData.treatments)
+        #self.buildTreeWidget(self.treeWidgetVisit, "Visit")
 
+        self.treeViews.addTab(self.treeWidgetCondition, "Conditions")
+        self.treeViews.addTab(self.treeWidgetDoctor, "Doctors")
+        self.treeViews.addTab(self.treeWidgetTest, "Tests")
+        self.treeViews.addTab(self.treeWidgetSymptom, "Symptoms")
+        self.treeViews.addTab(self.treeWidgetTreatment, "Treatments")
+        #self.treeViews.addTab(self.treeWidgetVisit, "Visits")
+        self.treeViews.setTabPosition(QTabWidget.West)
+        
         # Initialize item detail widget
         self.initConditionViewWidget()
 
         # Lay out the main UI elements
         mainLayout = QHBoxLayout()
-        mainLayout.addWidget(self.treeWidget)
+        mainLayout.addWidget(self.treeViews)
         mainLayout.addWidget(self.conditionViewWidget)
         mainLayout.setSizeConstraint(QLayout.SetFixedSize)
 
         self.mainWidget.setLayout(mainLayout)
         self.setCentralWidget(self.mainWidget)
 
+    def buildTreeWidget(self, treeWidget, widgetType, dataDict):
+        treeWidget.setHeaderHidden(True)
+        treeWidget.setColumnCount(1)
+        treeWidget.setIndentation(0)
+        treeWidget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        treeWidget.header().setStretchLastSection(False)
+        treeWidget.header().setSectionResizeMode(QHeaderView.ResizeToContents)
+        treeWidget.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Ignored)
+        treeWidget.setStyleSheet("QTreeWidget { border: none }")
+
+        self.buildTreeItems(dataDict, widgetType, treeWidget)
+
+    def buildTreeItems(self, dictionary, dictType, parent):
+        for item in dictionary.keys():
+            node = self.buildTreeItem(dictionary[item], dictType, parent)
+
+            if dictType == "Doctor":
+                tempList = [(dictionary[item].diagnoses, "Condition"),
+                            (dictionary[item].testsRun, "Test"),
+                            (dictionary[item].treatmentsRx, "Treatment")]
+                
+                for each in tempList:
+                    for entry in each[0]:
+                        child = self.buildTreeItem(entry, each[1], node)
+                        parent.setItemWidget(child, 0, child.main)
+                        
+            elif dictType == "Condition":
+                tempList = [(dictionary[item].symptoms, "Symptom"),
+                            (dictionary[item].treatments, "Treatment"),
+                            (dictionary[item].tests, "Test")]
+                
+                child = self.buildTreeItem(dictionary[item].diagnosingDr, "Doctor", node)
+                parent.setItemWidget(child, 0, child.main)
+
+                for each in tempList:
+                    for entry in each[0]:
+                        child = self.buildTreeItem(entry, each[1], node)
+                        parent.setItemWidget(child, 0, child.main)
+                        
+            elif dictType == "Test":
+                child = self.buildTreeItem(dictionary[item].forCondition, "Condition", node)
+                parent.setItemWidget(child, 0, child.main)
+
+                child = self.buildTreeItem(dictionary[item].doctor, "Doctor", node)
+                parent.setItemWidget(child, 0, child.main)
+
+            elif dictType == "Symptom":
+                # Do not make any child nodes for this view
+                pass
+
+            elif dictType == "Treatment":
+                child = self.buildTreeItem(dictionary[item].forCondition, "Condition", node)
+                parent.setItemWidget(child, 0, child.main)
+
+                child = self.buildTreeItem(dictionary[item].doctor, "Doctor", node)
+                parent.setItemWidget(child, 0, child.main)
+
+            elif dictType == "Visit":
+                pass
+
+            parent.setItemWidget(node, 0, node.main)
+
+    def buildTreeItem(self, obj, dictType, parent):
+        return CustomTreeWidgetItem(parent, dictType, obj.name, obj.getStartDate(), obj.getEndDate())
+        
     def constructMenus(self):
         self.statusBar()
 
@@ -214,7 +310,7 @@ class Window(QMainWindow):
             self.healthData.symptoms[each[0]] = Symptom(each[1], each[0])
 
         # Import symptom occurrence information
-        self.dbCursor.execute("SELECT * FROM Symptoms")
+        self.dbCursor.execute("SELECT * FROM SymptomsOccurrences")
         for each in self.dbCursor:
             self.healthData.symptomsOccurrences[each[0]] = SymptomOccurrence(each[1], each[0])
 
